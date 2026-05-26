@@ -9,7 +9,7 @@ df = pd.read_excel("students.xlsx")
 
 # 🟢 Clean data once (IMPORTANT)
 df["reg_no"] = df["reg_no"].astype(str).str.strip()
-df["dob"] = df["dob"].astype(str).str.strip()
+df["dob"] = pd.to_datetime(df["dob"], dayfirst=True).dt.strftime("%d-%m-%Y")
 
 # 🟢 Home route
 @app.route("/")
