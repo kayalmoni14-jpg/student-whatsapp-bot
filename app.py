@@ -1,8 +1,14 @@
-from flask import Flask, request
+from flask import Flask, request, render_template, redirect, url_for, session
+from flask_login import LoginManager, login_required
 from twilio.twiml.messaging_response import MessagingResponse
 import pandas as pd
 
 app = Flask(__name__)
+app.secret_key = "admin123"
+
+# Admin credentials
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
 
 # 📌 Load Excel file
 df = pd.read_excel("students.xlsx")
@@ -14,7 +20,35 @@ df["dob"] = pd.to_datetime(df["dob"], dayfirst=True).dt.strftime("%d-%m-%Y")
 # 🟢 Home route
 @app.route("/")
 def home():
-    return "WhatsApp Student Bot is Running"
+    return redirect(url_for("login"))
+
+# 🟢 Login route
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session["logged_in"] = True
+            return redirect(url_for("dashboard"))
+        else:
+            error = "Invalid username or password!"
+    return render_template("login.html", error=error)
+
+# 🟢 Logout route
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+# 🟢 Dashboard route
+@app.route("/dashboard")
+def dashboard():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    students = df.to_dict(orient="records")
+    return render_template("dashboard.html", students=students)
 
 # 🟢 WhatsApp route
 @app.route("/whatsapp", methods=["POST"])
