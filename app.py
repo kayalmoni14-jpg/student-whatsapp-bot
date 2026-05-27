@@ -69,7 +69,10 @@ def edit_student(reg_no):
         df.loc[df["reg_no"] == reg_no, "maths"] = request.form.get("maths")
         df.loc[df["reg_no"] == reg_no, "physics"] = request.form.get("physics")
         df.loc[df["reg_no"] == reg_no, "chemistry"] = request.form.get("chemistry")
-        df.to_excel("students.xlsx", index=False)
+        try:
+            df.to_excel("students.xlsx", index=False)
+        except:
+            pass
         return redirect(url_for("dashboard"))
     s = student.iloc[0]
     return render_template("edit_student.html", student=s)
