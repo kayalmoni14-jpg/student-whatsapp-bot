@@ -65,10 +65,10 @@ def edit_student(reg_no):
     if student.empty:
         return "Student not found"
     if request.method == "POST":
-        df.loc[df["reg_no"] == reg_no, "attendance"] = request.form.get("attendance")
-        df.loc[df["reg_no"] == reg_no, "maths"] = request.form.get("maths")
-        df.loc[df["reg_no"] == reg_no, "physics"] = request.form.get("physics")
-        df.loc[df["reg_no"] == reg_no, "chemistry"] = request.form.get("chemistry")
+        df.loc[df["reg_no"] == reg_no, "attendance"] = int(request.form.get("attendance"))
+        df.loc[df["reg_no"] == reg_no, "maths"] = int(request.form.get("maths"))
+        df.loc[df["reg_no"] == reg_no, "physics"] = int(request.form.get("physics"))
+        df.loc[df["reg_no"] == reg_no, "chemistry"] = int(request.form.get("chemistry"))
         try:
             df.to_excel("students.xlsx", index=False)
         except:
