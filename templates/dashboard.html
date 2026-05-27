@@ -34,6 +34,25 @@
         h2 {
             color: #333;
         }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            padding: 10px;
+            width: 250px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .search-box button {
+            padding: 10px 20px;
+            background: #128C7E;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -90,6 +109,12 @@
                 <p>Total Students</p>
             </div>
         </div>
+        <div class="search-box">
+            <form method="GET" action="/dashboard">
+                <input type="text" name="search" placeholder="Search by Reg No..." value="{{ search }}"/>
+                <button type="submit">Search</button>
+            </form>
+        </div>
         <h2>📋 Student List</h2>
         <table>
             <thead>
@@ -101,6 +126,7 @@
                     <th>Maths</th>
                     <th>Physics</th>
                     <th>Chemistry</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -113,6 +139,7 @@
                     <td>{{ student.maths }}</td>
                     <td>{{ student.physics }}</td>
                     <td>{{ student.chemistry }}</td>
+                    <td><a href="/edit/{{ student.reg_no }}" style="background:#128C7E;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;">Edit</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
