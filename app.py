@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, session
-from flask_login import LoginManager, login_required
 from twilio.twiml.messaging_response import MessagingResponse
 import pandas as pd
+import os
 
 app = Flask(__name__)
 app.secret_key = "admin123"
@@ -47,8 +47,32 @@ def logout():
 def dashboard():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
-    students = df.to_dict(orient="records")
-    return render_template("dashboard.html", students=students)
+    search = request.args.get("search", "").strip()
+    if search:
+        filtered = df[df["reg_no"].str.contains(search, case=False)]
+    else:
+        filtered = df
+    students = filtered.to_dict(orient="records")
+    return render_template("dashboard.html", students=students, search=search)
+
+# 🟢 Edit student route
+@app.route("/edit/<reg_no>", methods=["GET", "POST"])
+def edit_student(reg_no):
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    global df
+    student = df[df["reg_no"] == reg_no]
+    if student.empty:
+        return "Student not found"
+    if request.method == "POST":
+        df.loc[df["reg_no"] == reg_no, "attendance"] = request.form.get("attendance")
+        df.loc[df["reg_no"] == reg_no, "maths"] = request.form.get("maths")
+        df.loc[df["reg_no"] == reg_no, "physics"] = request.form.get("physics")
+        df.loc[df["reg_no"] == reg_no, "chemistry"] = request.form.get("chemistry")
+        df.to_excel("students.xlsx", index=False)
+        return redirect(url_for("dashboard"))
+    s = student.iloc[0]
+    return render_template("edit_student.html", student=s)
 
 # 🟢 WhatsApp route
 @app.route("/whatsapp", methods=["POST"])
@@ -96,4 +120,5 @@ def whatsapp_bot():
 
 # 🟢 Run server
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
