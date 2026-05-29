@@ -108,6 +108,17 @@ def add_student():
         return redirect(url_for("dashboard"))
     return render_template("add_student.html")
 
+# 🟢 Delete student route
+@app.route("/delete/<reg_no>")
+def delete_student(reg_no):
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    conn = get_db()
+    conn.execute("DELETE FROM students WHERE reg_no=?", (reg_no,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("dashboard"))
+
 # 🟢 WhatsApp route
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp_bot():

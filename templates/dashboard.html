@@ -149,7 +149,10 @@
                     <td>{{ student.maths }}</td>
                     <td>{{ student.physics }}</td>
                     <td>{{ student.chemistry }}</td>
-                    <td><a href="/edit/{{ student.reg_no }}" style="background:#128C7E;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;">Edit</a></td>
+                    <td>
+                        <a href="/edit/{{ student.reg_no }}" style="background:#128C7E;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;">Edit</a>
+                        <a href="/delete/{{ student.reg_no }}" style="background:#ff4444;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;margin-left:5px;" onclick="return confirm('Are you sure?')">Delete</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
