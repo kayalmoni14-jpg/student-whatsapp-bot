@@ -1,21 +1,18 @@
 from flask import Flask, request, render_template, redirect, url_for, session
 from twilio.twiml.messaging_response import MessagingResponse
-import pandas as pd
+import sqlite3
 import os
 
 app = Flask(__name__)
 app.secret_key = "admin123"
 
-# Admin credentials
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
 
-# 📌 Load Excel file
-df = pd.read_excel("students.xlsx")
-
-# 🟢 Clean data once (IMPORTANT)
-df["reg_no"] = df["reg_no"].astype(str).str.strip()
-df["dob"] = pd.to_datetime(df["dob"], dayfirst=True).dt.strftime("%d-%m-%Y")
+def get_db():
+    conn = sqlite3.connect("students.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # 🟢 Home route
 @app.route("/")
@@ -48,11 +45,15 @@ def dashboard():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
     search = request.args.get("search", "").strip()
+    conn = get_db()
     if search:
-        filtered = df[df["reg_no"].str.contains(search, case=False)]
+        students = conn.execute(
+            "SELECT * FROM students WHERE reg_no LIKE ?",
+            (f"%{search}%",)
+        ).fetchall()
     else:
-        filtered = df
-    students = filtered.to_dict(orient="records")
+        students = conn.execute("SELECT * FROM students").fetchall()
+    conn.close()
     return render_template("dashboard.html", students=students, search=search)
 
 # 🟢 Edit student route
@@ -60,22 +61,28 @@ def dashboard():
 def edit_student(reg_no):
     if not session.get("logged_in"):
         return redirect(url_for("login"))
-    global df
-    student = df[df["reg_no"] == reg_no]
-    if student.empty:
-        return "Student not found"
+    conn = get_db()
     if request.method == "POST":
-        df.loc[df["reg_no"] == reg_no, "attendance"] = int(request.form.get("attendance"))
-        df.loc[df["reg_no"] == reg_no, "maths"] = int(request.form.get("maths"))
-        df.loc[df["reg_no"] == reg_no, "physics"] = int(request.form.get("physics"))
-        df.loc[df["reg_no"] == reg_no, "chemistry"] = int(request.form.get("chemistry"))
-        try:
-            df.to_excel("students.xlsx", index=False)
-        except:
-            pass
+        conn.execute(
+            "UPDATE students SET attendance=?, maths=?, physics=?, chemistry=? WHERE reg_no=?",
+            (
+                int(request.form.get("attendance")),
+                int(request.form.get("maths")),
+                int(request.form.get("physics")),
+                int(request.form.get("chemistry")),
+                reg_no
+            )
+        )
+        conn.commit()
+        conn.close()
         return redirect(url_for("dashboard"))
-    s = student.iloc[0]
-    return render_template("edit_student.html", student=s)
+    student = conn.execute(
+        "SELECT * FROM students WHERE reg_no=?", (reg_no,)
+    ).fetchone()
+    conn.close()
+    if not student:
+        return "Student not found"
+    return render_template("edit_student.html", student=student)
 
 # 🟢 WhatsApp route
 @app.route("/whatsapp", methods=["POST"])
@@ -97,22 +104,21 @@ def whatsapp_bot():
 
     reg_no, dob = parts
 
-    # 🔍 search student
-    student = df[df["reg_no"] == reg_no]
+    conn = get_db()
+    student = conn.execute(
+        "SELECT * FROM students WHERE reg_no=?", (reg_no,)
+    ).fetchone()
+    conn.close()
 
-    if not student.empty:
-        stored_dob = str(student.iloc[0]["dob"])[:10].strip()
-
+    if student:
+        stored_dob = str(student["dob"])[:10].strip()
         if stored_dob == dob.strip():
-            s = student.iloc[0]
-
-            msg = f"Name: {s['name']}\n"
-            msg += f"Attendance: {s['attendance']}%\n\n"
+            msg = f"Name: {student['name']}\n"
+            msg += f"Attendance: {student['attendance']}%\n\n"
             msg += f"Marks:\n"
-            msg += f"Maths: {s['maths']}\n"
-            msg += f"Physics: {s['physics']}\n"
-            msg += f"Chemistry: {s['chemistry']}"
-
+            msg += f"Maths: {student['maths']}\n"
+            msg += f"Physics: {student['physics']}\n"
+            msg += f"Chemistry: {student['chemistry']}"
             reply.body(msg)
         else:
             reply.body("❌ Invalid DOB")
