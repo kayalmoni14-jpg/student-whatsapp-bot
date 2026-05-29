@@ -84,6 +84,30 @@ def edit_student(reg_no):
         return "Student not found"
     return render_template("edit_student.html", student=student)
 
+# 🟢 Add student route
+@app.route("/add", methods=["GET", "POST"])
+def add_student():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        conn = get_db()
+        conn.execute(
+            "INSERT INTO students (reg_no, name, dob, attendance, maths, physics, chemistry) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                request.form.get("reg_no"),
+                request.form.get("name"),
+                request.form.get("dob"),
+                int(request.form.get("attendance")),
+                int(request.form.get("maths")),
+                int(request.form.get("physics")),
+                int(request.form.get("chemistry"))
+            )
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for("dashboard"))
+    return render_template("add_student.html")
+
 # 🟢 WhatsApp route
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp_bot():
