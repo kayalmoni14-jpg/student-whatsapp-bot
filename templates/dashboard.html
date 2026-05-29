@@ -135,7 +135,7 @@
                     <td>{{ student.reg_no }}</td>
                     <td>{{ student.name }}</td>
                     <td>{{ student.dob }}</td>
-                    <td>{{ student.attendance }}%</td>
+                    <td style="color: {% if student.attendance < 75 %}red{% else %}green{% endif %}; font-weight: bold;">{{ student.attendance }}%</td>
                     <td>{{ student.maths }}</td>
                     <td>{{ student.physics }}</td>
                     <td>{{ student.chemistry }}</td>
