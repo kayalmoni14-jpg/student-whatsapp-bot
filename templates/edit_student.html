@@ -78,6 +78,13 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
+        .section-title {
+            color: #128C7E;
+            font-weight: bold;
+            margin-top: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -92,6 +99,7 @@
                 <strong>{{ student.name }}</strong> | Reg No: {{ student.reg_no }}
             </div>
             <form method="POST">
+                <p class="section-title">📊 Academic Details</p>
                 <label>Attendance (%)</label>
                 <input type="number" name="attendance" value="{{ student.attendance }}" required/>
                 <label>Maths</label>
@@ -100,6 +108,11 @@
                 <input type="number" name="physics" value="{{ student.physics }}" required/>
                 <label>Chemistry</label>
                 <input type="number" name="chemistry" value="{{ student.chemistry }}" required/>
+                <p class="section-title">👨‍👩‍👧 Parent Details</p>
+                <label>Parent Name</label>
+                <input type="text" name="parent_name" value="{{ student.parent_name or '' }}" placeholder="Parent Name"/>
+                <label>Parent Phone (with country code)</label>
+                <input type="text" name="phone" value="{{ student.phone or '' }}" placeholder="+919999999999"/>
                 <button type="submit" class="btn-save">💾 Save Changes</button>
             </form>
         </div>

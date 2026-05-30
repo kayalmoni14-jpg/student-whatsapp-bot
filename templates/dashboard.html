@@ -17,10 +17,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        .navbar h1 {
-            margin: 0;
-            font-size: 20px;
-        }
+        .navbar h1 { margin: 0; font-size: 20px; }
         .navbar a {
             color: white;
             text-decoration: none;
@@ -28,15 +25,9 @@
             padding: 8px 15px;
             border-radius: 5px;
         }
-        .container {
-            padding: 30px;
-        }
-        h2 {
-            color: #333;
-        }
-        .search-box {
-            margin-bottom: 20px;
-        }
+        .container { padding: 30px; }
+        h2 { color: #333; }
+        .search-box { margin-bottom: 20px; }
         .search-box input {
             padding: 10px;
             width: 250px;
@@ -67,13 +58,8 @@
             padding: 12px;
             text-align: left;
         }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-        }
-        tr:hover {
-            background: #f9f9f9;
-        }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f9f9f9; }
         .stats {
             display: flex;
             gap: 20px;
@@ -91,12 +77,19 @@
             font-size: 30px;
             color: #128C7E;
         }
-        .stat-card p {
-            margin: 5px 0 0;
-            color: #666;
-        }
+        .stat-card p { margin: 5px 0 0; color: #666; }
         .add-btn {
             background: #25D366;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .warn-btn {
+            background: #ff9800;
             color: white;
             padding: 10px 20px;
             border-radius: 5px;
@@ -126,6 +119,7 @@
         </div>
         <h2>📋 Student List</h2>
         <a href="/add" class="add-btn">➕ Add Student</a>
+        <a href="/send_warnings" class="warn-btn" onclick="return confirm('Send warnings to all parents below 75%?')">⚠️ Send Warnings</a>
         <table>
             <thead>
                 <tr>
