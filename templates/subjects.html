@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Subjects</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background: #128C7E;
+            padding: 15px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 { margin: 0; font-size: 20px; }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            background: #555;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+        .container {
+            padding: 30px;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h2 { color: #333; margin-top: 0; }
+        label {
+            display: block;
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .btn-save {
+            width: 100%;
+            padding: 12px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .btn-save:hover { background: #128C7E; }
+        .section-title {
+            color: #128C7E;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 25px;
+            border-bottom: 2px solid #25D366;
+            padding-bottom: 8px;
+        }
+        .subject-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .subject-row:last-child { border-bottom: none; }
+        .subject-name {
+            font-size: 15px;
+            color: #333;
+        }
+        .subject-max {
+            color: #128C7E;
+            font-weight: bold;
+        }
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🎓 Student Bot Admin</h1>
+        <a href="/dashboard">← Back</a>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>➕ Add Subject</h2>
+            <form method="POST">
+                <label>Subject Name</label>
+                <input type="text" name="subject_name" placeholder="e.g. Mathematics" required/>
+                <label>Maximum Marks</label>
+                <input type="number" name="max_marks" placeholder="e.g. 50" required/>
+                <button type="submit" class="btn-save">➕ Add Subject</button>
+            </form>
+        </div>
+
+        {% if subjects %}
+        <div class="card">
+            <h2>📚 Current Subjects</h2>
+            {% for subject in subjects %}
+            <div class="subject-row">
+                <span class="subject-name">{{ subject.subject_name }}</span>
+                <span class="subject-max">Out of {{ subject.max_marks }}</span>
+                <a href="/delete_subject/{{ subject.id }}" class="delete-btn" onclick="return confirm('Delete this subject?')">Delete</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>

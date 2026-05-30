@@ -3,6 +3,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 import sqlite3
 import os
+from datetime import date
 
 app = Flask(__name__)
 app.secret_key = "admin123"
@@ -112,6 +113,67 @@ def delete_student(reg_no):
     conn.close()
     return redirect(url_for("dashboard"))
 
+@app.route("/subjects", methods=["GET", "POST"])
+def subjects():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    conn = get_db()
+    if request.method == "POST":
+        conn.execute(
+            "INSERT INTO subjects (subject_name, max_marks) VALUES (?, ?)",
+            (
+                request.form.get("subject_name"),
+                int(request.form.get("max_marks"))
+            )
+        )
+        conn.commit()
+    subjects = conn.execute("SELECT * FROM subjects").fetchall()
+    conn.close()
+    return render_template("subjects.html", subjects=subjects)
+
+@app.route("/delete_subject/<int:subject_id>")
+def delete_subject(subject_id):
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    conn = get_db()
+    conn.execute("DELETE FROM subjects WHERE id=?", (subject_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("subjects"))
+
+@app.route("/add_exam/<reg_no>", methods=["GET", "POST"])
+def add_exam(reg_no):
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+    conn = get_db()
+    if request.method == "POST":
+        exam_name = request.form.get("exam_name")
+        subjects = conn.execute("SELECT * FROM subjects").fetchall()
+        today = str(date.today())
+        for subject in subjects:
+            mark = request.form.get("mark_" + str(subject["id"]))
+            if mark:
+                conn.execute(
+                    "INSERT INTO exam_marks (reg_no, exam_name, subject_id, mark, date) VALUES (?, ?, ?, ?, ?)",
+                    (reg_no, exam_name, subject["id"], int(mark), today)
+                )
+        conn.commit()
+        conn.close()
+        return redirect(url_for("dashboard"))
+    student = conn.execute("SELECT * FROM students WHERE reg_no=?", (reg_no,)).fetchone()
+    subjects = conn.execute("SELECT * FROM subjects").fetchall()
+    raw_exams = conn.execute(
+        "SELECT e.exam_name, e.mark, e.date, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=? ORDER BY e.exam_name",
+        (reg_no,)
+    ).fetchall()
+    conn.close()
+    exams = {}
+    for row in raw_exams:
+        if row["exam_name"] not in exams:
+            exams[row["exam_name"]] = []
+        exams[row["exam_name"]].append(row)
+    return render_template("add_exam.html", student=student, subjects=subjects, exams=exams)
+
 @app.route("/send_warnings")
 def send_warnings():
     if not session.get("logged_in"):
@@ -150,21 +212,30 @@ def whatsapp_bot():
     reg_no, dob = parts
     conn = get_db()
     student = conn.execute("SELECT * FROM students WHERE reg_no=?", (reg_no,)).fetchone()
-    conn.close()
     if student:
         stored_dob = str(student["dob"])[:10].strip()
         if stored_dob == dob.strip():
+            exams = conn.execute(
+                "SELECT e.exam_name, e.mark, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=? ORDER BY e.exam_name",
+                (reg_no,)
+            ).fetchall()
             msg = "Name: " + str(student["name"]) + "\n"
             msg += "Attendance: " + str(student["attendance"]) + "%\n\n"
-            msg += "Marks:\n"
-            msg += "Maths: " + str(student["maths"]) + "\n"
-            msg += "Physics: " + str(student["physics"]) + "\n"
-            msg += "Chemistry: " + str(student["chemistry"])
+            if exams:
+                current_exam = ""
+                for exam in exams:
+                    if exam["exam_name"] != current_exam:
+                        current_exam = exam["exam_name"]
+                        msg += "\n" + current_exam + ":\n"
+                    msg += exam["subject_name"] + ": " + str(exam["mark"]) + "/" + str(exam["max_marks"]) + "\n"
+            else:
+                msg += "No exam marks added yet."
             reply.body(msg)
         else:
             reply.body("Invalid DOB")
     else:
         reply.body("Invalid Reg No")
+    conn.close()
     return str(response)
 
 if __name__ == "__main__":

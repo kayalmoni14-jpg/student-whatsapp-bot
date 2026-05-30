@@ -78,15 +78,25 @@
             color: #128C7E;
         }
         .stat-card p { margin: 5px 0 0; color: #666; }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
         .add-btn {
             background: #25D366;
             color: white;
             padding: 10px 20px;
             border-radius: 5px;
             text-decoration: none;
-            margin-bottom: 20px;
-            display: inline-block;
-            margin-right: 10px;
+        }
+        .subject-btn {
+            background: #673ab7;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
         }
         .warn-btn {
             background: #ff9800;
@@ -94,8 +104,6 @@
             padding: 10px 20px;
             border-radius: 5px;
             text-decoration: none;
-            margin-bottom: 20px;
-            display: inline-block;
         }
     </style>
 </head>
@@ -118,8 +126,11 @@
             </form>
         </div>
         <h2>📋 Student List</h2>
-        <a href="/add" class="add-btn">➕ Add Student</a>
-        <a href="/send_warnings" class="warn-btn" onclick="return confirm('Send warnings to all parents below 75%?')">⚠️ Send Warnings</a>
+        <div class="btn-row">
+            <a href="/add" class="add-btn">➕ Add Student</a>
+            <a href="/subjects" class="subject-btn">📚 Manage Subjects</a>
+            <a href="/send_warnings" class="warn-btn" onclick="return confirm('Send warnings to all parents below 75%?')">⚠️ Send Warnings</a>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -144,7 +155,8 @@
                     <td>{{ student.physics }}</td>
                     <td>{{ student.chemistry }}</td>
                     <td>
-                        <a href="/edit/{{ student.reg_no }}" style="background:#128C7E;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;">Edit</a>
+                        <a href="/add_exam/{{ student.reg_no }}" style="background:#673ab7;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;">📝 Exam</a>
+                        <a href="/edit/{{ student.reg_no }}" style="background:#128C7E;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;margin-left:5px;">Edit</a>
                         <a href="/delete/{{ student.reg_no }}" style="background:#ff4444;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;margin-left:5px;" onclick="return confirm('Are you sure?')">Delete</a>
                     </td>
                 </tr>

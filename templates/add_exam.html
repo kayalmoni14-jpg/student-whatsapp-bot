@@ -2,29 +2,172 @@
 <html>
 <head>
     <title>Add Exam Marks</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background: #128C7E;
+            padding: 15px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 { margin: 0; font-size: 20px; }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            background: #555;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+        .container {
+            padding: 30px;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 { color: #333; margin-top: 0; }
+        label {
+            display: block;
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .btn-save {
+            width: 100%;
+            padding: 12px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .btn-save:hover { background: #128C7E; }
+        .student-info {
+            background: #f9f9f9;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            color: #128C7E;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 25px;
+            border-bottom: 2px solid #25D366;
+            padding-bottom: 8px;
+        }
+        .exam-card {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-top: 15px;
+            border-left: 5px solid #25D366;
+        }
+        .exam-card h4 {
+            margin: 0 0 10px 0;
+            color: #128C7E;
+            font-size: 16px;
+        }
+        .exam-date {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        .subject-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .subject-row:last-child { border-bottom: none; }
+        .subject-name { color: #555; font-size: 14px; }
+        .subject-mark { font-weight: bold; font-size: 16px; color: #128C7E; }
+        .subject-mark.low { color: #ff4444; }
+        .no-subjects {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            color: #856404;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
+    <div class="navbar">
+        <h1>🎓 Student Bot Admin</h1>
+        <a href="/dashboard">← Back</a>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>📝 Add Exam Marks</h2>
+            <div class="student-info">
+                <strong>{{ student.name }}</strong> | Reg No: {{ student.reg_no }}
+            </div>
 
-<h2>Add Exam Marks</h2>
+            {% if subjects %}
+            <form method="POST">
+                <p class="section-title">📋 Exam Details</p>
+                <label>Exam Name</label>
+                <select name="exam_name" required>
+                    <option value="">Select Exam</option>
+                    <option value="CIA 1">CIA 1</option>
+                    <option value="CIA 2">CIA 2</option>
+                    <option value="CIA 3">CIA 3</option>
+                </select>
+                <p class="section-title">📊 Marks</p>
+                {% for subject in subjects %}
+                <label>{{ subject.subject_name }} (out of {{ subject.max_marks }})</label>
+                <input type="number" name="mark_{{ subject.id }}" min="0" max="{{ subject.max_marks }}" placeholder="0 - {{ subject.max_marks }}" required/>
+                {% endfor %}
+                <button type="submit" class="btn-save">💾 Save Exam Marks</button>
+            </form>
+            {% else %}
+            <div class="no-subjects">
+                ⚠️ No subjects added yet!
+                <br><br>
+                <a href="/subjects" style="color:#128C7E;font-weight:bold;">➕ Add Subjects First</a>
+            </div>
+            {% endif %}
 
-<h3>{{ student.name }} ({{ student.reg_no }})</h3>
+            {% if exams %}
+            <p class="section-title">📚 Previous Exams</p>
+            {% for exam_name, marks in exams.items() %}
+            <div class="exam-card">
+                <h4>{{ exam_name }}</h4>
+                {% for mark in marks %}
+                <div class="subject-row">
+                    <span class="subject-name">{{ mark.subject_name }}</span>
+                    <span class="subject-mark {% if mark.mark < mark.max_marks // 2 %}low{% endif %}">{{ mark.mark }} / {{ mark.max_marks }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            {% endif %}
 
-<form method="POST">
-
-    <label>Exam Name</label><br>
-    <input type="text" name="exam_name" required><br><br>
-
-    <label>Subject</label><br>
-    <input type="text" name="subject" required><br><br>
-
-    <label>Mark</label><br>
-    <input type="number" name="mark" required><br><br>
-
-    <button type="submit">
-        Save Marks
-    </button>
-
-</form>
-
+        </div>
+    </div>
 </body>
 </html>
