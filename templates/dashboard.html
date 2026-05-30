@@ -138,9 +138,6 @@
                     <th>Name</th>
                     <th>DOB</th>
                     <th>Attendance</th>
-                    <th>Maths</th>
-                    <th>Physics</th>
-                    <th>Chemistry</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -151,9 +148,6 @@
                     <td>{{ student.name }}</td>
                     <td>{{ student.dob }}</td>
                     <td style="color: {% if student.attendance|int < 75 %}red{% else %}green{% endif %}; font-weight: bold;">{{ student.attendance }}%</td>
-                    <td>{{ student.maths }}</td>
-                    <td>{{ student.physics }}</td>
-                    <td>{{ student.chemistry }}</td>
                     <td>
                         <a href="/add_exam/{{ student.reg_no }}" style="background:#673ab7;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;">📝 Exam</a>
                         <a href="/edit/{{ student.reg_no }}" style="background:#128C7E;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;margin-left:5px;">Edit</a>
