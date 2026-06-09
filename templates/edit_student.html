@@ -3,88 +3,47 @@
 <head>
     <title>Edit Student</title>
     <style>
-        body {
-            font-family: Arial;
-            background: #f0f2f5;
-            margin: 0;
-            padding: 0;
-        }
+        body { font-family: Arial; background: #f0f2f5; margin: 0; padding: 0; }
         .navbar {
-            background: #128C7E;
-            padding: 15px 30px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #128C7E; padding: 15px 30px; color: white;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .navbar h1 {
-            margin: 0;
-            font-size: 20px;
-        }
+        .navbar h1 { margin: 0; font-size: 20px; }
         .navbar a {
-            color: white;
-            text-decoration: none;
-            background: #555;
-            padding: 8px 15px;
-            border-radius: 5px;
+            color: white; text-decoration: none; background: #555;
+            padding: 8px 15px; border-radius: 5px;
         }
-        .container {
-            padding: 30px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
+        .container { padding: 30px; max-width: 500px; margin: 0 auto; }
         .card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
+            background: white; padding: 30px; border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h2 {
-            color: #333;
-            margin-top: 0;
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            color: #666;
-            font-size: 14px;
-        }
+        h2 { color: #333; margin-top: 0; }
+        label { display: block; margin-top: 15px; color: #666; font-size: 14px; }
         input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 16px;
+            width: 100%; padding: 10px; margin-top: 5px;
+            border: 1px solid #ddd; border-radius: 5px;
+            box-sizing: border-box; font-size: 16px;
         }
         .btn-save {
-            width: 100%;
-            padding: 12px;
-            background: #25D366;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
+            width: 100%; padding: 12px; background: #25D366; color: white;
+            border: none; border-radius: 5px; cursor: pointer;
+            font-size: 16px; margin-top: 20px;
         }
-        .btn-save:hover {
-            background: #128C7E;
-        }
+        .btn-save:hover { background: #128C7E; }
         .student-info {
-            background: #f9f9f9;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            background: #f9f9f9; padding: 10px 15px;
+            border-radius: 5px; margin-bottom: 20px;
         }
         .section-title {
-            color: #128C7E;
-            font-weight: bold;
-            margin-top: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+            color: #128C7E; font-weight: bold; margin-top: 20px;
+            border-bottom: 1px solid #eee; padding-bottom: 5px;
         }
+        .exam-block {
+            background: #f9f9f9; border-radius: 8px;
+            padding: 15px; margin-top: 15px;
+        }
+        .exam-block h4 { margin: 0 0 10px 0; color: #333; }
     </style>
 </head>
 <body>
@@ -102,17 +61,26 @@
                 <p class="section-title">📊 Academic Details</p>
                 <label>Attendance (%)</label>
                 <input type="number" name="attendance" value="{{ student.attendance }}" required/>
-                <label>Maths</label>
-                <input type="number" name="maths" value="{{ student.maths }}" required/>
-                <label>Physics</label>
-                <input type="number" name="physics" value="{{ student.physics }}" required/>
-                <label>Chemistry</label>
-                <input type="number" name="chemistry" value="{{ student.chemistry }}" required/>
+
+                {% if exams %}
+                <p class="section-title">📝 Exam Marks</p>
+                {% for exam_name, marks in exams.items() %}
+                <div class="exam-block">
+                    <h4>{{ exam_name }}</h4>
+                    {% for m in marks %}
+                    <label>{{ m.subject_name }} (out of {{ m.max_marks }})</label>
+                    <input type="number" name="mark_{{ m.id }}" value="{{ m.mark }}" min="0" max="{{ m.max_marks }}"/>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                {% endif %}
+
                 <p class="section-title">👨‍👩‍👧 Parent Details</p>
                 <label>Parent Name</label>
                 <input type="text" name="parent_name" value="{{ student.parent_name or '' }}" placeholder="Parent Name"/>
                 <label>Parent Phone (with country code)</label>
                 <input type="text" name="phone" value="{{ student.phone or '' }}" placeholder="+919999999999"/>
+
                 <button type="submit" class="btn-save">💾 Save Changes</button>
             </form>
         </div>
