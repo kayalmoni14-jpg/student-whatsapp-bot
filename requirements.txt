@@ -4,3 +4,4 @@ pandas
 openpyxl
 gunicorn
 flask-login
+psycopg2-binary
