@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, session
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import os
 from datetime import date
 
@@ -12,9 +13,45 @@ ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
 
 def get_db():
-    conn = sqlite3.connect("students.db")
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(os.environ.get("DATABASE_URL"), sslmode="require")
     return conn
+
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS students (
+            reg_no TEXT PRIMARY KEY,
+            name TEXT,
+            dob TEXT,
+            attendance INTEGER,
+            maths INTEGER,
+            physics INTEGER,
+            chemistry INTEGER,
+            phone TEXT,
+            parent_name TEXT
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS subjects (
+            id SERIAL PRIMARY KEY,
+            subject_name TEXT,
+            max_marks INTEGER
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS exam_marks (
+            id SERIAL PRIMARY KEY,
+            reg_no TEXT,
+            exam_name TEXT,
+            subject_id INTEGER,
+            mark INTEGER,
+            date TEXT
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 @app.route("/")
 def home():
@@ -44,10 +81,13 @@ def dashboard():
         return redirect(url_for("login"))
     search = request.args.get("search", "").strip()
     conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     if search:
-        students = conn.execute("SELECT * FROM students WHERE reg_no LIKE ?", (f"%{search}%",)).fetchall()
+        cur.execute("SELECT * FROM students WHERE reg_no LIKE %s", (f"%{search}%",))
     else:
-        students = conn.execute("SELECT * FROM students").fetchall()
+        cur.execute("SELECT * FROM students")
+    students = cur.fetchall()
+    cur.close()
     conn.close()
     return render_template("dashboard.html", students=students, search=search)
 
@@ -56,9 +96,10 @@ def edit_student(reg_no):
     if not session.get("logged_in"):
         return redirect(url_for("login"))
     conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     if request.method == "POST":
-        conn.execute(
-            "UPDATE students SET attendance=?, phone=?, parent_name=? WHERE reg_no=?",
+        cur.execute(
+            "UPDATE students SET attendance=%s, phone=%s, parent_name=%s WHERE reg_no=%s",
             (
                 int(request.form.get("attendance")),
                 request.form.get("phone"),
@@ -70,18 +111,22 @@ def edit_student(reg_no):
             if key.startswith("mark_"):
                 exam_mark_id = key.replace("mark_", "")
                 if value.strip() != "":
-                    conn.execute(
-                        "UPDATE exam_marks SET mark=? WHERE id=?",
+                    cur.execute(
+                        "UPDATE exam_marks SET mark=%s WHERE id=%s",
                         (int(value), int(exam_mark_id))
                     )
         conn.commit()
+        cur.close()
         conn.close()
         return redirect(url_for("dashboard"))
-    student = conn.execute("SELECT * FROM students WHERE reg_no=?", (reg_no,)).fetchone()
-    raw_exams = conn.execute(
-        "SELECT e.id, e.exam_name, e.mark, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=? ORDER BY e.exam_name",
+    cur.execute("SELECT * FROM students WHERE reg_no=%s", (reg_no,))
+    student = cur.fetchone()
+    cur.execute(
+        "SELECT e.id, e.exam_name, e.mark, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=%s ORDER BY e.exam_name",
         (reg_no,)
-    ).fetchall()
+    )
+    raw_exams = cur.fetchall()
+    cur.close()
     conn.close()
     exams = {}
     for row in raw_exams:
@@ -98,8 +143,9 @@ def add_student():
         return redirect(url_for("login"))
     if request.method == "POST":
         conn = get_db()
-        conn.execute(
-            "INSERT INTO students (reg_no, name, dob, attendance, maths, physics, chemistry, phone, parent_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO students (reg_no, name, dob, attendance, maths, physics, chemistry, phone, parent_name) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 request.form.get("reg_no"),
                 request.form.get("name"),
@@ -113,6 +159,7 @@ def add_student():
             )
         )
         conn.commit()
+        cur.close()
         conn.close()
         return redirect(url_for("dashboard"))
     return render_template("add_student.html")
@@ -122,8 +169,10 @@ def delete_student(reg_no):
     if not session.get("logged_in"):
         return redirect(url_for("login"))
     conn = get_db()
-    conn.execute("DELETE FROM students WHERE reg_no=?", (reg_no,))
+    cur = conn.cursor()
+    cur.execute("DELETE FROM students WHERE reg_no=%s", (reg_no,))
     conn.commit()
+    cur.close()
     conn.close()
     return redirect(url_for("dashboard"))
 
@@ -132,16 +181,19 @@ def subjects():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
     conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     if request.method == "POST":
-        conn.execute(
-            "INSERT INTO subjects (subject_name, max_marks) VALUES (?, ?)",
+        cur.execute(
+            "INSERT INTO subjects (subject_name, max_marks) VALUES (%s, %s)",
             (
                 request.form.get("subject_name"),
                 int(request.form.get("max_marks"))
             )
         )
         conn.commit()
-    subjects = conn.execute("SELECT * FROM subjects").fetchall()
+    cur.execute("SELECT * FROM subjects")
+    subjects = cur.fetchall()
+    cur.close()
     conn.close()
     return render_template("subjects.html", subjects=subjects)
 
@@ -150,8 +202,10 @@ def delete_subject(subject_id):
     if not session.get("logged_in"):
         return redirect(url_for("login"))
     conn = get_db()
-    conn.execute("DELETE FROM subjects WHERE id=?", (subject_id,))
+    cur = conn.cursor()
+    cur.execute("DELETE FROM subjects WHERE id=%s", (subject_id,))
     conn.commit()
+    cur.close()
     conn.close()
     return redirect(url_for("subjects"))
 
@@ -160,26 +214,33 @@ def add_exam(reg_no):
     if not session.get("logged_in"):
         return redirect(url_for("login"))
     conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     if request.method == "POST":
         exam_name = request.form.get("exam_name")
-        subjects = conn.execute("SELECT * FROM subjects").fetchall()
+        cur.execute("SELECT * FROM subjects")
+        subjects = cur.fetchall()
         today = str(date.today())
         for subject in subjects:
             mark = request.form.get("mark_" + str(subject["id"]))
             if mark:
-                conn.execute(
-                    "INSERT INTO exam_marks (reg_no, exam_name, subject_id, mark, date) VALUES (?, ?, ?, ?, ?)",
+                cur.execute(
+                    "INSERT INTO exam_marks (reg_no, exam_name, subject_id, mark, date) VALUES (%s, %s, %s, %s, %s)",
                     (reg_no, exam_name, subject["id"], int(mark), today)
                 )
         conn.commit()
+        cur.close()
         conn.close()
         return redirect(url_for("dashboard"))
-    student = conn.execute("SELECT * FROM students WHERE reg_no=?", (reg_no,)).fetchone()
-    subjects = conn.execute("SELECT * FROM subjects").fetchall()
-    raw_exams = conn.execute(
-        "SELECT e.exam_name, e.mark, e.date, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=? ORDER BY e.exam_name",
+    cur.execute("SELECT * FROM students WHERE reg_no=%s", (reg_no,))
+    student = cur.fetchone()
+    cur.execute("SELECT * FROM subjects")
+    subjects = cur.fetchall()
+    cur.execute(
+        "SELECT e.exam_name, e.mark, e.date, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=%s ORDER BY e.exam_name",
         (reg_no,)
-    ).fetchall()
+    )
+    raw_exams = cur.fetchall()
+    cur.close()
     conn.close()
     exams = {}
     for row in raw_exams:
@@ -193,7 +254,10 @@ def send_warnings():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
     conn = get_db()
-    low_attendance = conn.execute("SELECT * FROM students WHERE attendance < 75 AND phone IS NOT NULL").fetchall()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM students WHERE attendance < 75 AND phone IS NOT NULL")
+    low_attendance = cur.fetchall()
+    cur.close()
     conn.close()
     account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
     auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
@@ -225,14 +289,17 @@ def whatsapp_bot():
         return str(response)
     reg_no, dob = parts
     conn = get_db()
-    student = conn.execute("SELECT * FROM students WHERE reg_no=?", (reg_no,)).fetchone()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM students WHERE reg_no=%s", (reg_no,))
+    student = cur.fetchone()
     if student:
         stored_dob = str(student["dob"])[:10].strip()
         if stored_dob == dob.strip():
-            exams = conn.execute(
-                "SELECT e.exam_name, e.mark, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=? ORDER BY e.exam_name",
+            cur.execute(
+                "SELECT e.exam_name, e.mark, s.subject_name, s.max_marks FROM exam_marks e JOIN subjects s ON e.subject_id = s.id WHERE e.reg_no=%s ORDER BY e.exam_name",
                 (reg_no,)
-            ).fetchall()
+            )
+            exams = cur.fetchall()
             msg = "Name: " + str(student["name"]) + "\n"
             msg += "Attendance: " + str(student["attendance"]) + "%\n\n"
             if exams:
@@ -249,8 +316,12 @@ def whatsapp_bot():
             reply.body("Invalid DOB")
     else:
         reply.body("Invalid Reg No")
+    cur.close()
     conn.close()
     return str(response)
+
+with app.app_context():
+    init_db()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
