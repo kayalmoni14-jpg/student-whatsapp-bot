@@ -25,9 +25,6 @@ def init_db():
             name TEXT,
             dob TEXT,
             attendance INTEGER,
-            maths INTEGER,
-            physics INTEGER,
-            chemistry INTEGER,
             phone TEXT,
             parent_name TEXT
         )
@@ -145,15 +142,12 @@ def add_student():
         conn = get_db()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO students (reg_no, name, dob, attendance, maths, physics, chemistry, phone, parent_name) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO students (reg_no, name, dob, attendance, phone, parent_name) VALUES (%s, %s, %s, %s, %s, %s)",
             (
                 request.form.get("reg_no"),
                 request.form.get("name"),
                 request.form.get("dob"),
                 int(request.form.get("attendance")),
-                int(request.form.get("maths")),
-                int(request.form.get("physics")),
-                int(request.form.get("chemistry")),
                 request.form.get("phone"),
                 request.form.get("parent_name")
             )
