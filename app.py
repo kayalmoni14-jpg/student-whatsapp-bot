@@ -265,9 +265,8 @@ def send_warnings():
                     to="whatsapp:" + str(student["phone"]),
                     body=msg
                 )
-            except Exception as e:
-                print("Failed to send warning to", student["reg_no"], "-", str(e))
-                
+            except:
+                pass
     return redirect(url_for("dashboard"))
 
 @app.route("/whatsapp", methods=["POST"])
