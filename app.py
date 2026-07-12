@@ -7,10 +7,10 @@ import os
 from datetime import date
 
 app = Flask(__name__)
-app.secret_key = "admin123"
+app.secret_key = os.environ.get("SECRET_KEY")
 
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 def get_db():
     conn = psycopg2.connect(os.environ.get("DATABASE_URL"), sslmode="require")
